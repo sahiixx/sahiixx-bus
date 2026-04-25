@@ -48,6 +48,12 @@ class ExecuteToolRequest(BaseModel):
     identity: str = "anonymous"
 
 
+class RegisterServiceRequest(BaseModel):
+    name: str
+    url: str
+    capabilities: list[str]
+
+
 # ---------------------------------------------------------------------------
 # A2A endpoints
 # ---------------------------------------------------------------------------
@@ -56,6 +62,13 @@ async def a2a_route(body: RouteTaskRequest) -> JSONResponse:
     """Route a task to the best matching A2A service."""
     result = await _router.route_task(body.task, body.capabilities)
     return JSONResponse(content=result)
+
+
+@app.post("/a2a/register")
+async def a2a_register(body: RegisterServiceRequest) -> JSONResponse:
+    """Register a new A2A service."""
+    await _router.register_service(body.name, body.url, body.capabilities)
+    return JSONResponse(content={"registered": body.name, "capabilities": len(body.capabilities)})
 
 
 @app.get("/a2a/discover")
