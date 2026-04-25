@@ -1,0 +1,2 @@
+[console_scripts]
+sahiixx_bus = sahiixx_bus.server:app
