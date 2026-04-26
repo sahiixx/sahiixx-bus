@@ -25,8 +25,6 @@ _router = A2ARouter(bus=_bus, safety=_safety)
 _mcp = MCPGateway(bus=_bus, safety=_safety, rbac=_rbac)
 
 # Seed RBAC so "admin" can use tools
-_rbac.add_role("admin", {_rbac.__class__.__dict__["__module__"]})
-# Actually we need to use the Permission enum directly
 from sahiixx_bus.core import Permission
 
 _rbac.add_role("admin", {Permission.TOOL_USE, Permission.EXECUTE, Permission.READ, Permission.WRITE})

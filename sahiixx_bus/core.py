@@ -567,15 +567,7 @@ class EconomicEngine:
         """
         budget = self._budgets.get(account, 0.0)
         ledger = self._ledgers.get(account, [])
-        spent = sum(
-            entry.get("amount", 0.0)
-            for entry in ledger
-            if entry.get("type") != "debit"
-        )
-        # Also subtract debits because they reduce balance
-        for entry in ledger:
-            if entry.get("type") == "debit":
-                spent += entry.get("amount", 0.0)
+        spent = sum(entry.get("amount", 0.0) for entry in ledger)
         return {
             "budget": budget,
             "spent": spent,

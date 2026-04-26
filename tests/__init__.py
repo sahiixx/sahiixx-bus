@@ -1,0 +1,1 @@
+"""pytest tests for sahiixx-bus."""

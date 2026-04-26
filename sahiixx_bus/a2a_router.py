@@ -191,3 +191,7 @@ class A2ARouter:
             ``["agency-agents", "goose-aios", "sovereign-swarm"]``
         """
         return list(self._fallback_chain)
+
+    async def close(self) -> None:
+        """Close the underlying HTTP client."""
+        await self._http.aclose()
