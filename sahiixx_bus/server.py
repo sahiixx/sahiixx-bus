@@ -9,6 +9,8 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
+import uvicorn
+
 from sahiixx_bus.a2a_router import A2ARouter
 from sahiixx_bus.core import RBACGuard, SafetyCouncil, SwarmBus
 from sahiixx_bus.mcp_gateway import MCPGateway
@@ -29,9 +31,15 @@ from sahiixx_bus.core import Permission
 
 _rbac.add_role("admin", {Permission.TOOL_USE, Permission.EXECUTE, Permission.READ, Permission.WRITE})
 _rbac.assign_role("admin", "admin")
+_rbac.assign_role("friday-os", "admin")
 _rbac.add_role("user", {Permission.TOOL_USE, Permission.READ})
 
 app = FastAPI(title="SAHIIXX Bus", version="0.1.0")
+
+
+def main() -> None:
+    """Entry point for `sahiixx_bus` console script."""
+    uvicorn.run(app, host="127.0.0.1", port=8090, log_level="info")
 
 
 # ---------------------------------------------------------------------------

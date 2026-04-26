@@ -12,6 +12,15 @@ __pycache__/
 .test-venv/
 .env
 
+# Env
+.env.local
+
+# venv
+venv/
+
+# uv lockfile (optional – tracked in some teams, ignored here)
+uv.lock
+
 # IDE
 .vscode/
 .idea/
