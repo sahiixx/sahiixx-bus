@@ -148,10 +148,14 @@ class A2ARouter:
             else:
                 result = {"error": "No agents available on goose-aios"}
         else:
-            # Generic — try to POST /task
+            # Generic — try to POST A2A invoke
             try:
-                resp = await self._http.post(f"{url}/task", json={"text": task})
-                result = resp.json()
+                resp = await self._http.post(f"{url}/a2a/invoke", json={"input": task})
+                if resp.status_code == 200:
+                    result = resp.json()
+                else:
+                    resp = await self._http.post(f"{url}/task", json={"text": task})
+                    result = resp.json()
             except Exception as exc:
                 result = {"error": str(exc)}
 

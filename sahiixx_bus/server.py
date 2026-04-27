@@ -31,6 +31,7 @@ _rbac.add_role("admin", {Permission.TOOL_USE, Permission.EXECUTE, Permission.REA
 _rbac.assign_role("admin", "admin")
 _rbac.assign_role("friday-os", "admin")
 _rbac.add_role("user", {Permission.TOOL_USE, Permission.READ})
+_rbac.assign_role("anonymous", "user")
 
 app = FastAPI(title="SAHIIXX Bus", version="0.1.0")
 
