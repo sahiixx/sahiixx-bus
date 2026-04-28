@@ -150,15 +150,14 @@ class AgencyBridge(BaseBridge):
 
     def _agent_url(self, agent_name: str) -> str:
         """Resolve an agent name to a concrete service URL."""
-        # Use self.base_url when available (e.g. Docker service names),
-        # fall back to port-based localhost mapping.
-        if self.base_url and agent_name in self._port_map:
-            base = self.base_url.rstrip("/")
-            # If base_url already includes a port, use it directly
-            if ":" in base.split("://")[-1]:
+        # When base_url has a hostname that's not "localhost", use it directly
+        # (e.g. Docker service name like "agency-agents:8100")
+        base = self.base_url.rstrip("/")
+        if "://" in base:
+            host_part = base.split("://")[1]
+            if host_part.split(":")[0] not in ("localhost", "127.0.0.1"):
                 return base
-            port = self._port_map.get(agent_name, 8100)
-            return f"{base}:{port}"
+        # Local fallback: use port map
         port = self._port_map.get(agent_name, 8100)
         return f"http://localhost:{port}"
 

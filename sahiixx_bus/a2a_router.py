@@ -33,7 +33,7 @@ class A2ARouter:
         self.safety = safety
         self._registry: dict[str, dict[str, Any]] = {}
         self._agent_cards: dict[str, dict] = {}
-        self._fallback_chain = ["agency-agents", "goose-aios", "sovereign-swarm"]
+        self._fallback_chain = ["friday-os", "goose-aios", "agency-agents"]
         self._http = httpx.AsyncClient(timeout=30.0)
 
     async def register_service(self, name: str, url: str, capabilities: list[str]) -> None:
@@ -68,8 +68,16 @@ class A2ARouter:
                 meta["last_seen"] = time.time()
                 cards.append(card)
             except Exception:
-                # Service unreachable — skip but keep registry entry
-                continue
+                # Service unreachable — emit synthetic card from registry
+                card = {
+                    "name": meta["name"],
+                    "url": meta["url"],
+                    "capabilities": meta["capabilities"],
+                    "last_seen": meta["last_seen"],
+                    "status": "unreachable",
+                }
+                self._agent_cards[name] = card
+                cards.append(card)
         return cards
 
     async def route_task(self, task: str, required_capabilities: list[str] | None = None) -> dict:
@@ -136,29 +144,56 @@ class A2ARouter:
         meta = self._registry[service_name]
         url = meta["url"]
 
-        if service_name == "agency-agents":
-            bridge = AgencyBridge(url)
-            result = await bridge.send_task(agent_name="jarvis", text=task)
-        elif service_name == "goose-aios":
-            bridge = GooseBridge(url)
-            agents = await bridge.list_agents()
-            if agents:
-                agent_id = agents[0].get("id", "default")
-                result = await bridge.delegate(agent_id, task)
-            else:
-                result = {"error": "No agents available on goose-aios"}
-        else:
-            # Generic — try to POST A2A invoke
-            try:
-                resp = await self._http.post(f"{url}/a2a/invoke", json={"input": task})
-                if resp.status_code == 200:
-                    result = resp.json()
-                else:
-                    resp = await self._http.post(f"{url}/task", json={"text": task})
-                    result = resp.json()
-            except Exception as exc:
-                result = {"error": str(exc)}
+        # For all services, try A2A invoke first, then /task, then bridge methods
+        endpoints = [
+            f"{url}/a2a/invoke",
+            f"{url}/task",
+            f"{url}/chat",
+        ]
+        payloads = [
+            {"input": task},        # A2A invoke
+            {"text": task},          # /task
+            {"message": task},       # /chat
+        ]
 
+        # Try bridge methods for known service types
+        if service_name == "goose-aios":
+            endpoints = [
+                f"{url}/api/chat",
+                f"{url}/chat",
+                f"{url}/a2a/invoke",
+                f"{url}/task",
+            ]
+            payloads = [
+                {"message": task},
+                {"message": task},
+                {"input": task},
+                {"text": task},
+            ]
+        elif service_name == "agency-agents":
+            try:
+                bridge = AgencyBridge(url)
+                result = await bridge.send_task(agent_name="jarvis", text=task)
+                await self.bus.publish("a2a.routed", {"service": service_name, "task": task})
+                return {"service": service_name, "result": result, "routed": True}
+            except Exception as exc:
+                # Fall through to generic endpoints
+                pass
+
+        for endpoint, payload in zip(endpoints, payloads):
+            try:
+                resp = await self._http.post(endpoint, json=payload, timeout=15.0)
+                if resp.status_code < 500:
+                    try:
+                        result = resp.json()
+                    except Exception:
+                        result = {"text": resp.text[:1000]}
+                    await self.bus.publish("a2a.routed", {"service": service_name, "task": task})
+                    return {"service": service_name, "result": result, "routed": True}
+            except Exception:
+                continue
+
+        result = {"error": f"All endpoints unreachable for {service_name} at {url}"}
         await self.bus.publish("a2a.routed", {"service": service_name, "task": task})
         return {"service": service_name, "result": result, "routed": True}
 
