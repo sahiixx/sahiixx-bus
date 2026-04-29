@@ -97,7 +97,9 @@ async def test_discover_all_skips_unreachable(router: A2ARouter) -> None:
     with patch.object(router._http, "get", new=AsyncMock(side_effect=httpx.ConnectError("fail"))):
         cards = await router.discover_all()
 
-    assert cards == []
+    assert len(cards) == 1
+    assert cards[0]["name"] == "bad"
+    assert cards[0]["status"] == "unreachable"
     assert "bad" in router._registry
 
 
@@ -217,4 +219,4 @@ async def test_get_agent_card_not_found(router: A2ARouter) -> None:
 def test_get_fallback_chain(router: A2ARouter) -> None:
     """Returns the expected fallback chain."""
     chain = router.get_fallback_chain()
-    assert chain == ["agency-agents", "goose-aios", "sovereign-swarm"]
+    assert chain == ["friday-os", "goose-aios", "agency-agents"]

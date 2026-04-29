@@ -227,7 +227,7 @@ class A2ARouter:
         """Return the built-in fallback chain.
 
         Returns:
-            ``["agency-agents", "goose-aios", "sovereign-swarm"]``
+            ``["friday-os", "goose-aios", "agency-agents"]``
         """
         return list(self._fallback_chain)
 
