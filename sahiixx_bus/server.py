@@ -62,6 +62,22 @@ class RegisterServiceRequest(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+# Root status endpoint
+# ---------------------------------------------------------------------------
+@app.get("/")
+async def root() -> JSONResponse:
+    """Root endpoint returning bus status."""
+    return JSONResponse(
+        content={
+            "service": "sahiixx-bus",
+            "status": "ok",
+            "version": "0.1.0",
+            "endpoints": ["/health", "/a2a/route", "/a2a/register", "/a2a/discover", "/mcp/tools", "/mcp/execute", "/ws"],
+        }
+    )
+
+
+# ---------------------------------------------------------------------------
 # A2A endpoints
 # ---------------------------------------------------------------------------
 @app.post("/a2a/route")

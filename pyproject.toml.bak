@@ -27,8 +27,3 @@ dev = [
 
 [project.scripts]
 sahiixx_bus = "sahiixx_bus.server:main"
-
-[tool.setuptools.packages.find]
-where = ["."]
-include = ["sahiixx_bus*"]
-exclude = ["data*"]
