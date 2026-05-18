@@ -55,14 +55,36 @@
 
 ## Quick Start
 
+### Option A — Full Ecosystem (Docker)
+
 ```bash
-pip install -e .
-# Start the bus server
-sahiixx_bus
+# 1. Clone the bus (contains docker-compose for everything)
+git clone https://github.com/sahiixx/sahiixx-bus && cd sahiixx-bus
+
+# 2. Configure secrets
+cp .env.example .env
+# Edit .env with your API keys
+
+# 3. Start all services
+docker compose up -d
+
+# Services started:
+#   bus        → http://localhost:8000  (pub-sub + MCP gateway)
+#   agency     → http://localhost:8080  (OPA REST API)
+#   dashboard  → http://localhost:3000  (React UI)
+#   swarm      → http://localhost:8100  (sovereign-swarm)
+#   friday     → http://localhost:8200  (voice AI)
+#   saas       → http://localhost:8300  (multi-tenant platform)
+#   neo4j      → http://localhost:7474  (graph browser)
+#   qdrant     → http://localhost:6333  (vector store)
 ```
 
-Default port: `8000`  
-MCP gateway: `8001`
+### Option B — Bus Only (Python)
+
+```bash
+pip install -e .
+sahiixx_bus       # starts on :8000 (HTTP) and :8001 (MCP)
+```
 
 ## Bus API
 
