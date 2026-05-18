@@ -1,0 +1,140 @@
+# SAHIIXX Ecosystem — Full Stack
+# Start everything: docker compose up -d
+# Stop everything:  docker compose down
+
+version: "3.9"
+
+services:
+
+  # ── Core Bus ───────────────────────────────────────────────────────────
+  bus:
+    build: .
+    container_name: sahiixx-bus
+    ports:
+      - "8000:8000"   # HTTP/WS pub-sub
+      - "8001:8001"   # MCP gateway
+    environment:
+      - SAHIIXX_BUS_HOST=0.0.0.0
+      - SAHIIXX_BUS_PORT=8000
+      - SAHIIXX_BUS_MCP_PORT=8001
+      - SAHIIXX_BUS_NAMESPACE=sahiixx
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sahiixx-net
+
+  # ── OPA Orchestrator ───────────────────────────────────────────
+  agency:
+    image: ghcr.io/sahiixx/sahiixx-agency:latest
+    container_name: sahiixx-agency
+    ports:
+      - "8080:8080"   # FastAPI REST
+      - "8081:8081"   # MCP server
+      - "3000:3000"   # React dashboard
+    environment:
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - GITHUB_USER=sahiixx
+      - BUS_URL=http://bus:8000
+    depends_on:
+      bus:
+        condition: service_healthy
+    networks:
+      - sahiixx-net
+
+  # ── Sovereign Swarm ─────────────────────────────────────────────
+  swarm:
+    image: ghcr.io/sahiixx/sovereign-swarm-v2:latest
+    container_name: sovereign-swarm
+    ports:
+      - "8100:8100"
+    environment:
+      - BUS_URL=http://bus:8000
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+    depends_on:
+      bus:
+        condition: service_healthy
+    networks:
+      - sahiixx-net
+
+  # ── Friday OS ────────────────────────────────────────────────────
+  friday:
+    image: ghcr.io/sahiixx/friday-os:latest
+    container_name: friday-os
+    ports:
+      - "8200:8200"
+    environment:
+      - BUS_URL=http://bus:8000
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - LIVEKIT_URL=${LIVEKIT_URL}
+      - LIVEKIT_API_KEY=${LIVEKIT_API_KEY}
+      - LIVEKIT_API_SECRET=${LIVEKIT_API_SECRET}
+    depends_on:
+      bus:
+        condition: service_healthy
+    networks:
+      - sahiixx-net
+
+  # ── SaaS Agent Platform ─────────────────────────────────────────
+  saas:
+    image: ghcr.io/sahiixx/saas-agent-platform:latest
+    container_name: saas-platform
+    ports:
+      - "8300:8300"
+    environment:
+      - BUS_URL=http://bus:8000
+      - DATABASE_URL=sqlite:///./data/saas.db
+      - SECRET_KEY=${SECRET_KEY:-changeme-in-production}
+    volumes:
+      - saas-data:/app/data
+    depends_on:
+      bus:
+        condition: service_healthy
+    networks:
+      - sahiixx-net
+
+  # ── Neo4j (for graph-sight + geoflow) ────────────────────────────
+  neo4j:
+    image: neo4j:5
+    container_name: sahiixx-neo4j
+    ports:
+      - "7474:7474"   # Browser
+      - "7687:7687"   # Bolt
+    environment:
+      - NEO4J_AUTH=neo4j/${NEO4J_PASSWORD:-sahiixx2024}
+      - NEO4J_PLUGINS=["apoc"]
+    volumes:
+      - neo4j-data:/data
+    networks:
+      - sahiixx-net
+
+  # ── Redis (for AGI layer) ──────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: sahiixx-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - sahiixx-net
+
+  # ── Qdrant (vector store for AGI) ────────────────────────────────
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: sahiixx-qdrant
+    ports:
+      - "6333:6333"
+    volumes:
+      - qdrant-data:/qdrant/storage
+    networks:
+      - sahiixx-net
+
+volumes:
+  neo4j-data:
+  qdrant-data:
+  saas-data:
+
+networks:
+  sahiixx-net:
+    driver: bridge
