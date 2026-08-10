@@ -1,134 +1,134 @@
-# SAHIIXX Bus 🚌
+# sahiixx-bus
 
-> **Unified orchestration layer for the SAHIIXX ecosystem.**  
-> Async pub/sub message bus · A2A bridge · MCP gateway · inter-agent routing backbone
-
----
-
-## Architecture
+![Python](https://img.shields.io/badge/python-3.11+-blue) ![Docker](https://img.shields.io/badge/docker-ready-blue) ![Agentic](https://img.shields.io/badge/agentic-harness-purple)
 
 ```
-┌──────────────────────────────────────────────────────────────┐
-│                   sahiixx-agency (OPA)                        │
-│        Auto-discovery · Smart routing · CLI/API/MCP           │
-└───────────────────────────┬──────────────────────────────────┘
-                            │ orchestrates
-┌───────────────────────────▼──────────────────────────────────┐
-│                      sahiixx-bus  ← YOU ARE HERE              │
-│          SwarmBus · A2ARouter · MCPGateway · Bridge           │
-│                    pub/sub messaging backbone                  │
-└──┬──────────┬────────────┬────────────┬───────────┬──────────┘
-   │          │            │            │           │
-┌──▼──────┐ ┌─▼──────┐ ┌──▼───────┐ ┌──▼──────┐ ┌─▼──────────┐
-│sovereign│ │friday  │ │clearwing │ │saas-    │ │sahiix-agi  │
-│-swarm   │ │-os     │ │(pentest) │ │agent-   │ │(AGI layer) │
-│-v2      │ │(voice) │ │          │ │platform │ │            │
-└──┬──────┘ └──┬─────┘ └──┬───────┘ └─────────┘ └────────────┘
-   │           │           │
-   │      ┌────▼──────┐    │
-   │      │titans-    │    │
-   │      │memory     │◄───┘  (shared memory layer)
-   │      └───────────┘
-   │
-   └──► sahiixx-graph-sight (Neo4j trust graph + code context)
-              │
-              └──► sahiixx-geoflow-agent (Dubai RE content)
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Quick Start](#quick-start)
+- [Agentic Architecture](#agentic-architecture)
+- [Model Routing](#model-routing)
+- [Project Layout](#project-layout)
+- [Development](#development)
+- [Related Repositories](#related-repositories)
+
+## Overview
+
 ```
 
----
-
-## Ecosystem Modules
-
-| Module | Role | Bus Channel | Protocol |
-|--------|------|-------------|----------|
-| [sovereign-swarm-v2](https://github.com/sahiixx/sovereign-swarm-v2) | Multi-agent OS runtime | `swarm.*` | A2A |
-| [friday-os](https://github.com/sahiixx/friday-os) | Voice AI + personal assistant | `friday.*` | MCP |
-| [sahiixx-clearwing](https://github.com/sahiixx/sahiixx-clearwing) | Pentesting swarm | `security.*` | A2A |
-| [saas-agent-platform](https://github.com/sahiixx/saas-agent-platform) | Multi-tenant SaaS | `saas.*` | REST+MCP |
-| [sahiix-agi](https://github.com/sahiixx/sahiix-agi) | AGI coordination | `agi.*` | A2A |
-| [sahiixx-titans-memory](https://github.com/sahiixx/sahiixx-titans-memory) | Surprise-weighted memory | `memory.*` | Python lib |
-| [sahiixx-graph-sight](https://github.com/sahiixx/sahiixx-graph-sight) | Neo4j trust graph + context | `graph.*` | Python lib |
-| [sahiixx-geoflow-agent](https://github.com/sahiixx/sahiixx-geoflow-agent) | Dubai RE GEO optimization | `geo.*` | A2A |
-| [sahiixx-agency](https://github.com/sahiixx/sahiixx-agency) | OPA orchestrator | `agency.*` | MCP+REST |
-
----
+| | |
+|---|---|
+| **Stack** | python |
+| **Frameworks** | docker, fastapi, pydantic |
+| **Tests** | yes |
+| **Commits** | 2 |
+| **Last activity** | 2026-08-10 |
+| **Visibility** | public |
 
 ## Quick Start
 
-### Option A — Full Ecosystem (Docker)
+### Install
 
 ```bash
-# 1. Clone the bus (contains docker-compose for everything)
-git clone https://github.com/sahiixx/sahiixx-bus && cd sahiixx-bus
-
-# 2. Configure secrets
-cp .env.example .env
-# Edit .env with your API keys
-
-# 3. Start all services
-docker compose up -d
-
-# Services started:
-#   bus        → http://localhost:8000  (pub-sub + MCP gateway)
-#   agency     → http://localhost:8080  (OPA REST API)
-#   dashboard  → http://localhost:3000  (React UI)
-#   swarm      → http://localhost:8100  (sovereign-swarm)
-#   friday     → http://localhost:8200  (voice AI)
-#   saas       → http://localhost:8300  (multi-tenant platform)
-#   neo4j      → http://localhost:7474  (graph browser)
-#   qdrant     → http://localhost:6333  (vector store)
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt   # or: pip install -e .
 ```
 
-### Option B — Bus Only (Python)
+### Run
 
 ```bash
-pip install -e .
-sahiixx_bus       # starts on :8000 (HTTP) and :8001 (MCP)
+# Entry point not auto-detected; inspect the layout below.
 ```
 
-## Bus API
+## Agentic Architecture
 
-```python
-from sahiixx_bus.core import SwarmBus
+This repository participates in the [sahiixx agentic harness](https://github.com/sahiixx/agentic-harness) — a shared
+contract for how agents plan, act, verify, and recover across all repos in this account.
 
-bus = SwarmBus(namespace="sahiixx")
+**Signal strength:** agentic density score `107` (references to agent,
+tool-call, LLM, RAG and orchestration primitives across the source tree).
 
-# Subscribe an agent
-await bus.subscribe("friday.voice", handle_voice_event)
+### Patterns in play
 
-# Publish from any module
-await bus.publish("friday.voice", {"text": "Hello", "agent": "friday-os"})
+| Pattern | Role here |
+|---|---|
+| **Prompt Chaining** | Deterministic multi-step pipelines where subtasks are known upfront |
+| **Routing** | Classify input, dispatch to the specialist path (cheap model for easy work) |
+| **Parallelization** | Independent subtasks fan out; results aggregated programmatically |
+| **Orchestrator–Workers** | Central planner decomposes dynamically when subtasks can't be predicted |
+| **Evaluator–Optimizer** | Generator/judge split with explicit rubric; bounded retry |
+| **ReAct** | Interleaved reason → act → observe for adaptive tool use |
+| **Reflection** | Self-critique before emitting a final answer |
 
-# Request/response pattern
-result = await bus.request("memory.recall", {"query": "last meeting"})
+> Escalation rule: start with the simplest pattern that solves the problem. Add
+> Reflection only when verification fails, Planning only when dependencies emerge,
+> Multi-Agent only when work exceeds a single role or context window.
+
+### Reliability envelope
+
+- **Bounded execution** — every loop has a max-iteration and wall-clock ceiling.
+- **Tool sandboxing** — filesystem/network side effects are isolated and reversible.
+- **Guardrail layering** — validate at input, mid-loop, and output.
+- **Context engineering** — select, compress, isolate; never let raw history grow unbounded.
+- **Self-verification** — check intermediate output against constraints before continuing.
+
+## Model Routing
+
+Agent work in this repo routes through Azure AI Foundry. See [`AGENTS.md`](./AGENTS.md)
+for the full contract.
+
+| Purpose | Deployment | Endpoint |
+|---|---|---|
+| Default / general | `gpt-5.6-sol` | `/openai/v1/chat/completions` |
+| Deep reasoning | `claude-opus-5` | `/openai/v1/responses` **only** |
+| Embeddings | `text-embedding-3-small` | `/openai/v1/embeddings` |
+
+```bash
+export AZURE_FOUNDRY_API_KEY=...        # never commit this
+export AZURE_FOUNDRY_BASE_URL=https://<resource>.openai.azure.com/openai/v1
 ```
 
-## Module Registration
+> **Gotcha:** Claude deployments on Azure return `404 api_not_supported` on
+> `/chat/completions`. They answer **only** via the Responses API.
 
-Any module can register itself on startup:
+## Project Layout
 
-```python
-from sahiixx_bus.bridge import AgentBridge
-
-bridge = AgentBridge(bus, agent_id="my-module", channels=["my.*"])
-await bridge.connect()
 ```
+AGENTS.md
+Dockerfile
+LICENSE
+README.md
+V1_TO_V2_SYNC.md
+data/
+docker-compose.yml
+mcp_server.py
+pyproject.toml
+pyproject.toml.bak
+sahiixx_bus/
+tests/
+```
+
+## Development
+
+```bash
+# lint / format before committing
+ruff check . && ruff format .
+
+# run the CI check locally
+gh workflow run hermes-azure-check.yml
+```
+
+Secrets live in environment variables and CI secrets — never in tracked files.
+
+## Related Repositories
+
+Part of a 84-repository workspace sharing one agentic contract:
+
+- **[agentic-harness](https://github.com/sahiixx/agentic-harness)** — patterns, contracts, and reference implementations
+- `AGENTS.md` in every repo pins identical model routing
 
 ---
 
-## Environment Variables
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `SAHIIXX_BUS_HOST` | `0.0.0.0` | Bind host |
-| `SAHIIXX_BUS_PORT` | `8000` | HTTP/WS port |
-| `SAHIIXX_BUS_MCP_PORT` | `8001` | MCP gateway port |
-| `SAHIIXX_BUS_NAMESPACE` | `sahiixx` | Bus namespace |
-
----
-
-## Related
-
-- [sahiixx-agency](https://github.com/sahiixx/sahiixx-agency) — OPA orchestrator that sits above the bus
-- [sovereign-swarm-v2](https://github.com/sahiixx/sovereign-swarm-v2) — primary swarm consumer
-- [friday-os](https://github.com/sahiixx/friday-os) — voice interface connected via MCP
+<sub>README maintained by the agentic harness · last regenerated 2026-08-10</sub>
